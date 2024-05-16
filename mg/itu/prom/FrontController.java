@@ -79,7 +79,6 @@ public class FrontController extends HttpServlet {
     
         for (File file : files) {
             String fileName = file.getName();
-            //~ System.out.println("File : " + fileName);
 
             if (fileName.endsWith(".class")) {
                 String className = packageName + '.' + fileName.substring(0, fileName.length() - 6);
