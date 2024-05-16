@@ -41,9 +41,9 @@ public class FrontController extends HttpServlet {
         System.out.println(url);
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
-        out.println(" => "+test);
+        out.println("Test: "+test);          
+        out.println("listes des controllers : ");
         for (Class<?> class1 : controllers) {
-            out.println("listes des controllers : ");
             out.println("      =>"+class1.getName());
         }
     }
