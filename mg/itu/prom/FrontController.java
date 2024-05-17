@@ -19,31 +19,34 @@ public class FrontController extends HttpServlet {
 
    private String basePackage;
    private List<Class<?>> controllers = new ArrayList<>();
-   private int test = 0;
+   private boolean test;
 
    @Override
    public void init(ServletConfig config) throws ServletException {
       super.init(config);
-      test += 1;
-      basePackage = config.getInitParameter("base-package");
-      try {
-         controllers = scanClasses(basePackage);
-      } catch (Exception e) {
-         throw new ServletException("Erreur lors du scan des classes", e);
-      }
+        basePackage = config.getInitParameter("base-package");
+        test = false;
    }
 
    public FrontController() {
    }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if(test == false){
+            try {
+                controllers = ScannerClass.scanClasses(basePackage);
+                test = true;
+            } catch (Exception e) {
+                throw new ServletException("Erreur lors du scan des classes", e);
+            }
+        }
         StringBuffer url = request.getRequestURL();
         System.out.println(url);
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
-        out.println("Test: "+test);          
-        out.println("listes des controllers : ");
+        out.println(" => "+test);
         for (Class<?> class1 : controllers) {
+            out.println("listes des controllers : ");
             out.println("      =>"+class1.getName());
         }
     }
@@ -63,39 +66,5 @@ public class FrontController extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-
-    public static List<Class<?>> scanClasses(String packageName) throws Exception {
-
-        List<Class<?>> classes = new ArrayList<>();
-        String path = packageName.replace('.', '/');
-    
-        URL url = Thread.currentThread().getContextClassLoader().getResource(path);
-        if (url == null) {
-            throw new Exception("Package :" + packageName + "nom trouve");
-        }
-    
-        File directory = new File(url.toURI());
-        File[] files = directory.listFiles();
-    
-        for (File file : files) {
-            String fileName = file.getName();
-
-            if (fileName.endsWith(".class")) {
-                String className = packageName + '.' + fileName.substring(0, fileName.length() - 6);
-    
-                try {
-                    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                    Class<?> loadedClass = classLoader.loadClass(className);
-                    if (loadedClass.getAnnotation(Controleur.class) != null) {
-                        classes.add(loadedClass);   
-                    }
-                } 
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return classes;
-    }
 
 }
