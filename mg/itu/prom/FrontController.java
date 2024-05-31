@@ -24,26 +24,24 @@ public class FrontController extends HttpServlet {
 //    private boolean test;
 
    @Override
-   public void init(ServletConfig config) throws ServletException {
-      super.init(config);
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
         basePackage = config.getInitParameter("base-package");
         try {
             controllers = ScannerClass.scanClasses(basePackage);
-            for(Class<?> controller : controllers){
+            for (Class<?> controller : controllers) {
                 Method[] fonctions = controller.getDeclaredMethods();
-                for(Method fonction : fonctions){
-                    if(fonction.isAnnotationPresent(Get.class)){
+                for (Method fonction : fonctions) {
+                    if (fonction.isAnnotationPresent(Get.class)) {
                         Get get = fonction.getAnnotation(Get.class);
-                        methods.put(get.value(), new Mapping(controller.getName(), fonction.getName()));
+                        methods.put(get.value(), new Mapping(controller.getName(), fonction.getName(), fonction));
                     }
                 }
             }
-            // test = true;
         } catch (Exception e) {
             throw new ServletException("Erreur lors du scan des classes", e);
         }
-        // test = false;
-   }
+    }
 
    public FrontController() {
    }
@@ -59,9 +57,28 @@ public class FrontController extends HttpServlet {
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
         // out.println(" => "+test);
-        if(methods.containsKey(path)){
+        if (methods.containsKey(path)) {
             Mapping map = methods.get(path);
             out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
+            try {
+                Class<?> clazz = Class.forName(map.getClassName());
+                Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
+                Method method = map.getMethod();
+
+                Object result = method.invoke(controllerInstance);
+                if (result != null) {
+                    out.print("\n Resultat: ==>" + result.toString());
+                }
+            } catch (ClassNotFoundException e) {
+                out.print("\nClass not found: " + e.getMessage());
+            } catch (NoSuchMethodException e) {
+                out.print("\nNo such method: " + e.getMessage());
+            } catch (Exception e) {
+                out.print("Error executing method: " + e.getMessage());
+                e.printStackTrace(out);
+            }
+        }else{
+            out.print("Tsy misy ilay method amin'ny url");
         }
     }
     @Override
