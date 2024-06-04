@@ -2,15 +2,12 @@ package mg.itu.prom;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.ServletConfig;
-
-import java.net.URL;
-import java.io.File;
-
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletConfig;
+import javax.servlet.RequestDispatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -18,23 +15,25 @@ import java.lang.reflect.Method;
 
 public class FrontController extends HttpServlet {
 
-   private String basePackage;
-   private List<Class<?>> controllers = new ArrayList<>();
-   private HashMap<String, Mapping> methods = new HashMap<String, Mapping>();
-//    private boolean test;
+    private String basePackage;
+    private List<Class<?>> controllers = new ArrayList<>();
+    private HashMap<String, Mapping> methods = new HashMap<>();
 
-   @Override
+    @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         basePackage = config.getInitParameter("base-package");
         try {
             controllers = ScannerClass.scanClasses(basePackage);
+            System.out.println("Classes found: " + controllers.size());
             for (Class<?> controller : controllers) {
-                Method[] fonctions = controller.getDeclaredMethods();
-                for (Method fonction : fonctions) {
-                    if (fonction.isAnnotationPresent(Get.class)) {
-                        Get get = fonction.getAnnotation(Get.class);
-                        methods.put(get.value(), new Mapping(controller.getName(), fonction.getName(), fonction));
+                System.out.println("Scanning class: " + controller.getName());
+                Method[] functions = controller.getDeclaredMethods();
+                for (Method function : functions) {
+                    if (function.isAnnotationPresent(Get.class)) {
+                        Get get = function.getAnnotation(Get.class);
+                        methods.put(get.value(), new Mapping(controller.getName(), function.getName(), function));
+                        System.out.println("Mapped URL " + get.value() + " to method " + function.getName() + " in class " + controller.getName());
                     }
                 }
             }
@@ -43,20 +42,21 @@ public class FrontController extends HttpServlet {
         }
     }
 
-   public FrontController() {
-   }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // if(test == false){
-        // }
         StringBuffer url = request.getRequestURL();
         String contextPath = request.getContextPath();
         String requestURI = request.getRequestURI();
         String path = requestURI.substring(contextPath.length());
-        System.out.println(url);
+
+        System.out.println("Requested URL: " + url);
+        System.out.println("Context Path: " + contextPath);
+        System.out.println("Request URI: " + requestURI);
+        System.out.println("Path: " + path);
+
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
-        // out.println(" => "+test);
+
         if (methods.containsKey(path)) {
             Mapping map = methods.get(path);
             out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
@@ -67,7 +67,7 @@ public class FrontController extends HttpServlet {
 
                 Object result = method.invoke(controllerInstance);
                 if (result != null) {
-                    out.print("\n Resultat: ==>" + result.toString());
+                    dispatchResponse(request, response, result, out);
                 }
             } catch (ClassNotFoundException e) {
                 out.print("\nClass not found: " + e.getMessage());
@@ -77,10 +77,11 @@ public class FrontController extends HttpServlet {
                 out.print("Error executing method: " + e.getMessage());
                 e.printStackTrace(out);
             }
-        }else{
+        } else {
             out.print("Tsy misy ilay method amin'ny url");
         }
     }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -93,9 +94,26 @@ public class FrontController extends HttpServlet {
         processRequest(request, response);
     }
 
+    protected void dispatchResponse(HttpServletRequest request, HttpServletResponse response, Object model, PrintWriter out)
+            throws ServletException, IOException {
+        if (model instanceof String) {
+            out.println(model);
+        } else if (model instanceof ModelView) {
+            ModelView modelView = (ModelView) model;
+            RequestDispatcher dispatcher = request.getRequestDispatcher(modelView.getUrl());
+            HashMap<String, Object> data = modelView.getData();
+            for (String varName : data.keySet()) {
+                request.setAttribute(varName, data.get(varName));
+            }
+            dispatcher.forward(request, response);
+        } else {
+            out.println("return type not found!!");
+            throw new ServletException("return type not found!!");
+        }
+    }
+
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
-
+    }
 }
