@@ -59,7 +59,7 @@ public class FrontController extends HttpServlet {
 
         if (methods.containsKey(path)) {
             Mapping map = methods.get(path);
-            out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
+            // out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
             try {
                 Class<?> clazz = Class.forName(map.getClassName());
                 Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
@@ -73,6 +73,8 @@ public class FrontController extends HttpServlet {
                 out.print("\nClass not found: " + e.getMessage());
             } catch (NoSuchMethodException e) {
                 out.print("\nNo such method: " + e.getMessage());
+            } catch (ServletException e){
+                throw e;
             } catch (Exception e) {
                 out.print("Error executing method: " + e.getMessage());
                 e.printStackTrace(out);
@@ -107,7 +109,7 @@ public class FrontController extends HttpServlet {
             }
             dispatcher.forward(request, response);
         } else {
-            out.println("return type not found!!");
+            // out.println("return type not found!!");
             throw new ServletException("return type not found!!");
         }
     }
