@@ -66,7 +66,15 @@ public class FrontController extends HttpServlet {
                         try {
                             out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
                             Class<?> clazz = Class.forName(map.getClassName());
+                            Field[] fields = clazz.getDeclaredFields();
                             Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
+                            for(Field field : fields){
+                                if(field.getType() == MySession.class){
+                                    field.setAccessible(true);
+                                    // Object instance = clazz.getDeclaredConstructor().newInstance();
+                                    field.set(controllerInstance, new MySession(request.getSession()));
+                                }
+                            }
                             Method method = map.getMethod();
 
                             List<Object> listArgs = MethodParameters.parseParameters(request, map.getMethod());
