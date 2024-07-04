@@ -14,7 +14,7 @@ public class ScannerClass{
     
         URL url = Thread.currentThread().getContextClassLoader().getResource(path);
         if (url == null) {
-            throw new Exception("Package :" + packageName + "nom trouve");
+            throw new Exception("Package :" + packageName + " nom trouve");
         }
     
         File directory = new File(url.toURI());
