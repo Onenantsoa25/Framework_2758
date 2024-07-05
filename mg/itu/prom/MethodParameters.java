@@ -69,6 +69,13 @@ public class MethodParameters {
                     parsedArgs.add(obj);
                 }
             }
+            else{
+                Class<?> type = arg.getType();
+
+                if (MySession.class.isAssignableFrom(type)) {
+                    parsedArgs.add(new MySession(request.getSession()));
+                }
+            }
         }
 
         return parsedArgs;
