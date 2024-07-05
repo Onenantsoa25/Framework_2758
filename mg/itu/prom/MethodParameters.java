@@ -33,31 +33,32 @@ public class MethodParameters {
     public static List<Object> parseParameters(HttpServletRequest request, Method method) throws Exception {
         List<Object> parsedArgs = new ArrayList<>();
 
-
         for (Parameter arg : method.getParameters()) {
             Param requestParam = arg.getAnnotation(Param.class);
             RequestBody requestBody = arg.getAnnotation(RequestBody.class);
-            if(requestParam != null){
-                String annotName;
-                if (!requestParam.value().isEmpty()) {
-                    annotName = requestParam.value();
-                }
-                else {
-                    annotName = arg.getName();
-                }
 
+            if (requestParam != null) {
+                String annotName = requestParam.value().isEmpty() ? arg.getName() : requestParam.value();
                 String value = request.getParameter(annotName);
                 Class<?> type = arg.getType();
-                Object parsedValue = TypeResolver.castValue(value,type);
-                parsedArgs.add(parsedValue);
-            }
-            else if (requestBody != null) {
-                try {
+                Object parsedValue = TypeResolver.castValue(value, type);
+
+                if (MySession.class.isAssignableFrom(type)) {
+                    parsedValue = new MySession(request.getSession());
+                }
                 
-                    Constructor<?> constructor = arg.getType().getDeclaredConstructor();
+                parsedArgs.add(parsedValue);
+            } 
+            else if (requestBody != null) {
+                Class<?> type = arg.getType();
+
+                if (MySession.class.isAssignableFrom(type)) {
+                    parsedArgs.add(new MySession(request.getSession()));
+                } else {
+                    Constructor<?> constructor = type.getDeclaredConstructor();
                     Object obj = constructor.newInstance();
-                    
-                    for (Field field : obj.getClass().getDeclaredFields()) {
+
+                    for (Field field : type.getDeclaredFields()) {
                         String fieldName = field.getName();
                         String paramValue = request.getParameter(fieldName);
                         if (paramValue != null) {
@@ -65,17 +66,18 @@ public class MethodParameters {
                             field.set(obj, TypeResolver.castValue(paramValue, field.getType()));
                         }
                     }
-    
                     parsedArgs.add(obj);
-                } catch (InstantiationException | IllegalAccessException e) {
-                   throw new Exception(e);
                 }
             }
-            
+            else{
+                Class<?> type = arg.getType();
 
-            
-
+                if (MySession.class.isAssignableFrom(type)) {
+                    parsedArgs.add(new MySession(request.getSession()));
+                }
+            }
         }
+
         return parsedArgs;
     }
 
