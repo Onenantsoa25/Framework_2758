@@ -10,6 +10,12 @@ public class MySession {
         this.session = session;
     }
 
+    public void setSession(HttpSession session){
+        this.session = session;
+    }
+
+    public MySession(){}
+
     public void setAttribute(String name, Object value) {
         session.setAttribute(name, value);
     }

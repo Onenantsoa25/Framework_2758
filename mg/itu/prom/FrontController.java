@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.lang.reflect.*;
 
+import com.google.gson.Gson;
+
 public class FrontController extends HttpServlet {
 
     private String basePackage;
