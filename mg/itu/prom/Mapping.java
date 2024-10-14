@@ -12,12 +12,13 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class Mapping {
     private String className;
-    private String methodName;
+    // private String methodName;
+    private VerbMethod verbMethod;
     private Method method;
 
-    public Mapping(String className, String methodName, Method method) {
+    public Mapping(String className, VerbMethod verbMethod, Method method) {
         this.className = className;
-        this.methodName = methodName;
+        this.verbMethod = verbMethod;
         this.method = method;
     }
 
@@ -25,8 +26,8 @@ public class Mapping {
         return className;
     }
 
-    public String getMethodName() {
-        return methodName;
+    public VerbMethod getMethodName() {
+        return verbMethod;
     }
 
     public Method getMethod() {

@@ -11,8 +11,7 @@ import jakarta.servlet.RequestDispatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
-import java.lang.reflect.*;
-
+import java.lang.reflect.Method;
 import com.google.gson.Gson;
 
 public class FrontController extends HttpServlet {
@@ -21,26 +20,42 @@ public class FrontController extends HttpServlet {
     private List<Class<?>> controllers = new ArrayList<>();
     private HashMap<String, Mapping> methods = new HashMap<>();
     boolean buildException = true;
-    // boolean erreurInterne = false;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         basePackage = config.getInitParameter("base-package");
         try {
+            // Scan les classes dans le package de base
             controllers = ScannerClass.scanClasses(basePackage);
             System.out.println("Classes found: " + controllers.size());
-            if(controllers.size() > 0){
+            if (controllers.size() > 0) {
                 this.buildException = false;
             }
+            
             for (Class<?> controller : controllers) {
-                System.out.println("Scanning class: " + controller.getName());
+                String baseUrl = "";
+                
+                // Vérifier si la classe est annotée avec @Url
+                if (controller.isAnnotationPresent(Url.class)) {
+                    Url urlAnnotation = controller.getAnnotation(Url.class);
+                    baseUrl = urlAnnotation.value();
+                }
+                
+                // Scan des méthodes annotées (Get, Post, etc.)
                 Method[] functions = controller.getDeclaredMethods();
                 for (Method function : functions) {
                     if (function.isAnnotationPresent(Get.class)) {
                         Get get = function.getAnnotation(Get.class);
-                        methods.put(get.value(), new Mapping(controller.getName(), function.getName(), function));
-                        System.out.println("Mapped URL " + get.value() + " to method " + function.getName() + " in class " + controller.getName());
+                        String fullUrl = baseUrl + get.value();
+                        methods.put("GET:" + fullUrl, new Mapping(controller.getName(), new VerbMethod("GET", function.getName()), function));
+                        System.out.println("Mapped URL " + fullUrl + " [GET] to method " + function.getName() + " in class " + controller.getName());
+                    }
+                    if (function.isAnnotationPresent(Post.class)) {
+                        Post post = function.getAnnotation(Post.class);
+                        String fullUrl = baseUrl + post.value();
+                        methods.put("POST:" + fullUrl, new Mapping(controller.getName(), new VerbMethod("POST", function.getName()), function));
+                        System.out.println("Mapped URL " + fullUrl + " [POST] to method " + function.getName() + " in class " + controller.getName());
                     }
                 }
             }
@@ -51,61 +66,61 @@ public class FrontController extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-                if(this.buildException){
-                    // throw new ServletException("probleme base-package");
-                }
-                else{
-                    // erreurInterne = false;
-                    StringBuffer url = request.getRequestURL();
 
-                    String path = request.getServletPath();
+        if (this.buildException) {
+            throw new ServletException("Erreur lors du chargement des mappings.");
+        }
 
-                    response.setContentType("text/plain");
-                    PrintWriter out = response.getWriter();
+        String methodType = request.getMethod(); // Le verbe HTTP de la requête (GET, POST, etc.)
+        String path = request.getServletPath();  // L'URL demandée
 
-                    if (methods.containsKey(path)) {
-                        Mapping map = methods.get(path);
-                        try {
-                            out.print(path + " -> " + map.getClassName() + " -> " + map.getMethodName());
-                            Class<?> clazz = Class.forName(map.getClassName());
-                            Field[] fields = clazz.getDeclaredFields();
-                            Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
-                            for(Field field : fields){
-                                if(field.getType() == MySession.class){
-                                    field.setAccessible(true);
-                                    // Object instance = clazz.getDeclaredConstructor().newInstance();
-                                    field.set(controllerInstance, new MySession(request.getSession()));
-                                }
-                            }
-                            Method method = map.getMethod();
+        response.setContentType("text/plain");
+        PrintWriter out = response.getWriter();
 
-                            List<Object> listArgs = MethodParameters.parseParameters(request, map.getMethod());
-                            Object valueFunction = map.getMethod().invoke(controllerInstance, listArgs.toArray());
+        // Vérifiez si le chemin est associé à une méthode dans la HashMap
+        if (methods.containsKey(path)) {
+            Mapping map = methods.get(path);
+            
+            // Récupérez le verbe attendu pour cette méthode (GET, POST, etc.)
+            VerbMethod verbMethod = map.getMethodName(); // Classe contenant le verbe et la méthode associée
 
-                            dispatchResponse(request,response,valueFunction,out);
+            // Vérifiez si le verbe de la requête correspond à celui attendu par la méthode
+            if (!methodType.equalsIgnoreCase(verbMethod.getVerb())) {
+                // Si le verbe ne correspond pas, renvoyez une erreur
+                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, 
+                                "Le verbe HTTP '" + methodType + "' n'est pas autorisé pour cette URL. Attendu: '" + verbMethod.getVerb() + "'");
+                return; // Arrêtez l'exécution
+            }
 
-                            // Object result = method.invoke(controllerInstance);
-                            // if (result != null) {
-                            //     dispatchResponse(request, response, result, out);
-                            // }
-                            // if(erreurInterne){
-                            //     throw new ServletException("Erreur: Type de retour de la fonction de l'url");
-                            // }
-                        } catch (ClassNotFoundException e) {
-                            out.print("\nClass not found: " + e.getMessage());
-                        } catch (NoSuchMethodException e) {
-                            out.print("\nNo such method: " + e.getMessage());
-                        } catch(ServletException e){
-                            throw e;   
-                        } catch (Exception e) {
-                            out.print("Error executing method: " + e.getMessage());
-                            e.printStackTrace(out);
-                        }
-                    } else {
-                        throw new ServletException("Tsy misy ilay method amin'ny url");
-                    }
-                }
+            // Si le verbe correspond, exécutez la méthode normalement
+            try {
+                out.print(path + " -> " + map.getClassName() + " -> " + verbMethod.getMethod());
+
+                // Récupérer la classe et l'instance de contrôleur associée
+                Class<?> clazz = Class.forName(map.getClassName());
+                Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
+
+                // Exécuter la méthode
+                Method method = map.getMethod();
+                List<Object> listArgs = MethodParameters.parseParameters(request, map.getMethod());
+                Object valueFunction = method.invoke(controllerInstance, listArgs.toArray());
+
+                dispatchResponse(request, response, valueFunction, out);
+
+            } catch (ClassNotFoundException e) {
+                out.print("\nClass not found: " + e.getMessage());
+            } catch (NoSuchMethodException e) {
+                out.print("\nNo such method: " + e.getMessage());
+            } catch (Exception e) {
+                out.print("Error executing method: " + e.getMessage());
+                e.printStackTrace(out);
+            }
+        } else {
+            // Si l'URL n'est pas trouvée dans la HashMap, renvoyez une erreur
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Aucune méthode trouvée pour l'URL " + path);
+        }
     }
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -121,7 +136,6 @@ public class FrontController extends HttpServlet {
 
     protected void dispatchResponse(HttpServletRequest request, HttpServletResponse response, Object model, PrintWriter out)
             throws ServletException, IOException {
-                // erreurInterne = false;
         if (model instanceof String) {
             out.println(model);
         } else if (model instanceof ModelView) {
@@ -133,9 +147,7 @@ public class FrontController extends HttpServlet {
             }
             dispatcher.forward(request, response);
         } else {
-            // erreurInterne = true;
-            // out.println("return type not found!!");
-            throw new ServletException("return type not found!!");
+            throw new ServletException("Type de retour non géré pour la méthode.");
         }
     }
 

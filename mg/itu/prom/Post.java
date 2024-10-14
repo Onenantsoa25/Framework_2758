@@ -7,5 +7,5 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)  // Cette annotation sera utilisée sur des méthodes
-public @interface Get {
+public @interface Post {
 }
