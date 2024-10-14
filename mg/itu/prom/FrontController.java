@@ -68,7 +68,8 @@ public class FrontController extends HttpServlet {
             throws ServletException, IOException {
 
         if (this.buildException) {
-            throw new ServletException("Erreur lors du chargement des mappings.");
+            // throw new ServletException("Erreur lors du chargement des mappings.");
+            
         }
 
         String methodType = request.getMethod(); // Le verbe HTTP de la requête (GET, POST, etc.)
@@ -113,11 +114,12 @@ public class FrontController extends HttpServlet {
                 out.print("\nNo such method: " + e.getMessage());
             } catch (Exception e) {
                 out.print("Error executing method: " + e.getMessage());
-                e.printStackTrace(out);
+                // e.printStackTrace(out);
             }
         } else {
             // Si l'URL n'est pas trouvée dans la HashMap, renvoyez une erreur
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Aucune méthode trouvée pour l'URL " + path);
+            // response.sendError(HttpServletResponse.SC_NOT_FOUND, "Aucune méthode trouvée pour l'URL " + path);
+            out.println("Erreur 404, Aucune methode trouvee pour l'Url: " + path);
         }
     }
 
@@ -147,7 +149,8 @@ public class FrontController extends HttpServlet {
             }
             dispatcher.forward(request, response);
         } else {
-            throw new ServletException("Type de retour non géré pour la méthode.");
+            // throw new ServletException("Type de retour non géré pour la méthode.");
+            out.println("Type de retour non gere");
         }
     }
 
