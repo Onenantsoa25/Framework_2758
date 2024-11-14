@@ -14,6 +14,13 @@ import java.util.HashMap;
 import java.lang.reflect.Method;
 import com.google.gson.Gson;
 
+import jakarta.servlet.annotation.MultipartConfig;
+
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024, // 1 MB
+    maxFileSize = 1024 * 1024 * 10,  // 10 MB
+    maxRequestSize = 1024 * 1024 * 50 // 50 MB
+)
 public class FrontController extends HttpServlet {
 
     private String basePackage;
