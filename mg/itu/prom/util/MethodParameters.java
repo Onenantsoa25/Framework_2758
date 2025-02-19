@@ -1,4 +1,4 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -11,7 +11,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 import jakarta.servlet.http.HttpServletRequest;
-// import src.mg.itu.Prom16.annotations.Param;
+
+import mg.itu.prom.annotation.*;
+
+// import src.mg.itu.prom.annotations.Param;
 
 public class MethodParameters {
 

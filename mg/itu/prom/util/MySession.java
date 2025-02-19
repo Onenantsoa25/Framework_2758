@@ -1,4 +1,4 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import jakarta.servlet.http.HttpSession;
 

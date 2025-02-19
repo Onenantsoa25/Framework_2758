@@ -1,4 +1,4 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 
-// import mg.itu.Prom16.exception.request.Exception;
+// import mg.itu.prom.exception.request.Exception;
 
 public class TypeResolver {
 

@@ -1,4 +1,4 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import com.google.gson.Gson;
 import jakarta.servlet.RequestDispatcher;
@@ -15,7 +15,11 @@ import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
+import mg.itu.prom.annotation.*;
+
+
 public abstract class ServletUtil {
+
     public static void dispatchView (HttpServletRequest request, HttpServletResponse response, ModelView modelView) throws ServletException, IOException {
         for (Map.Entry<String, Object> map : modelView.getData().entrySet()) {
             request.setAttribute(map.getKey(), map.getValue());

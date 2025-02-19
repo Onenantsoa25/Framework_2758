@@ -1,10 +1,13 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import java.net.URL;
 import java.io.File;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import mg.itu.prom.annotation.*;
+
 
 public class ScannerClass{
     public static List<Class<?>> scanClasses(String packageName) throws Exception {

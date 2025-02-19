@@ -1,10 +1,11 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import java.util.HashMap;
 
 public class ModelView {
     private String Url;
     private HashMap<String,Object> data = new HashMap<>();
+    
     public String getUrl() {
         return Url;
     }

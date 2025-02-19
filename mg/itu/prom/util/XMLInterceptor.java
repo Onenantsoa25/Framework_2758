@@ -1,4 +1,4 @@
-package mg.itu.prom;
+package mg.itu.prom.util;
 
 import jakarta.servlet.ServletConfig;
 import org.w3c.dom.Document;
