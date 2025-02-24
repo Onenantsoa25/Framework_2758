@@ -181,7 +181,7 @@ public class FrontController extends HttpServlet {
 
                             ApiRequest apiRequest = map.getRequest(request.getMethod());
                             Class<?> class1 = apiRequest.getClass1();
-                            // AuthorizationHandler.isAuthorizedGeneric(class1, request, config);
+                            AuthorizationHandler.isAuthorizedGeneric(class1, request, config);
                             Method method = apiRequest.getMethod();
 
                             Object instance = apiRequest.getClass1().getDeclaredConstructor().newInstance();

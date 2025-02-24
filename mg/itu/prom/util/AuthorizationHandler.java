@@ -38,5 +38,42 @@ public class AuthorizationHandler {
         }
     }
 
+
+    public static void isAuthorizedGeneric(Class<?> clazz, HttpServletRequest request, ServletConfig context) throws Exception {
+        AuthManager authManager = new AuthManager(context);
+        HttpSession session = request.getSession();
+
+        if (session == null) {
+            throw new UnauthorizedException("Access denied, Session not exist!!");
+        }
+
+        // Vérifier si RequireLogin et AuthorizedRoles sont présentes en même temps
+        boolean hasRequireLogin = clazz.isAnnotationPresent(RequireLogin.class);
+        boolean hasAuthorizedRoles = clazz.isAnnotationPresent(AuthorizedRoles.class);
+
+        if (hasRequireLogin && hasAuthorizedRoles) {
+            throw new IllegalArgumentException("Les annotations @RequireLogin et @AuthorizedRoles ne peuvent pas être présentes en même temps dans " + clazz.getSimpleName());
+        }
+
+        // Vérifier RequireLogin
+        if (hasRequireLogin && session != null) {
+            if (!authManager.isAuthenticated(session)) {
+                throw new UnauthorizedException("Access denied, Login required");
+            }
+        }
+        // Vérifier AuthorizedRoles
+        else if (hasAuthorizedRoles && session != null) {
+            if (!authManager.isAuthenticated(session)) {
+                throw new UnauthorizedException("Access denied, Login required !");
+            }
+
+            // Récupérer les rôles depuis l'annotation sur la classe
+            String[] roles = clazz.getAnnotation(AuthorizedRoles.class).roles();
+
+            if (!authManager.hasRoles(session, roles)) {
+                throw new IllegalArgumentException("Access denied, ROLES required !!");
+            }
+        }
+    }
     
 }
