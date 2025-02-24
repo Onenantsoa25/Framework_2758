@@ -42,6 +42,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        this.config = config;
         basePackage = config.getInitParameter("base-package");
         try {
             controllers = ScannerClass.scanClasses(basePackage);
@@ -190,7 +191,7 @@ public class FrontController extends HttpServlet {
                             if (br != null) setBackPage(request,response, br, method);
                             
                             ServletUtil.processSession(instance, request);
-                            // AuthorizationHandler.isAuthorized(method, request, config);
+                            AuthorizationHandler.isAuthorized(method, request, config);
                             Object valueFunction = method.invoke(instance, listArgs.toArray());
                             
                             Rest restApi = method.getAnnotation(Rest.class);
