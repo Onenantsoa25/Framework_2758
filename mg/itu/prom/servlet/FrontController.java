@@ -239,8 +239,21 @@ public class FrontController extends HttpServlet {
                         } catch(ServletException e){
                             throw e;   
                         } catch (Exception e) {
-                            out.print("Error executing method: " + e.getMessage());
-                            e.printStackTrace(out);
+
+
+                            if (e instanceof UnauthorizedException) {
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+                                return;
+                            }
+                            e.printStackTrace();
+                            response.setContentType("text/html;charset=UTF-8");    
+                            response.setStatus(500);
+                            // PrintWriter out = response.getWriter();
+                            out.println("<p>" + e.getMessage() + "</p>");
+                            out.close();  
+
+                            // out.print("Error executing method: " + e.getMessage());
+                            // e.printStackTrace(out);
                         }
                     } else {
                         throw new ServletException("Tsy misy ilay method amin'ny url");
