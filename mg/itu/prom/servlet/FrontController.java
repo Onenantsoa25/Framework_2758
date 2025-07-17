@@ -12,7 +12,7 @@ import jakarta.servlet.RequestDispatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
-import java.lang.ModuleLayer.Controller;
+// import java.lang.ModuleLayer.Controller;
 import java.lang.reflect.*;
 import jakarta.servlet.annotation.MultipartConfig;
 
@@ -23,6 +23,7 @@ import mg.itu.prom.util.*;
 import mg.itu.prom.validation.BindingResult;
 import mg.itu.prom.validation.annotation.ErrorHandlerUrl;
 import mg.itu.prom.exception.*;
+import mg.itu.prom.response.StringResponseHandler;
 
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024, // 1 MB
@@ -37,6 +38,7 @@ public class FrontController extends HttpServlet {
     private HashMap<String, Mapping> methods = new HashMap<>();
     boolean buildException = true;
     ServletConfig config;
+    private final StringResponseHandler stringResponseHandler = new StringResponseHandler();
     // boolean erreurInterne = false;
 
     @Override
@@ -295,8 +297,10 @@ public class FrontController extends HttpServlet {
     protected void dispatchResponse(HttpServletRequest request, HttpServletResponse response, Object model, PrintWriter out)
             throws ServletException, IOException {
                 // erreurInterne = false;
-        if (model instanceof String) {
-            out.println(model);
+        if (model instanceof String){
+            String string = (String) model;
+            // out.println(model);
+            stringResponseHandler.handleStringResponse(request, response, string);
         } else if (model instanceof ModelView) {
             ModelView modelView = (ModelView) model;
             RequestDispatcher dispatcher = request.getRequestDispatcher(modelView.getUrl());
